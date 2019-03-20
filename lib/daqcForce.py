@@ -1,46 +1,60 @@
 from tkinter import *
 from lib.singeltons import *
-global scale
+import lib.HX711
+from lib.HX711 import sensor
+import time
+import pigpio # http://abyz.co.uk/rpi/pigpio/python.html
+from collections import deque
 
 class daqcForce:
-    def __init__(self,root,addr,channel):
-        #self.scale = Scale(samples=2)
-        self.scale=HX711(5,6)
-
-        self.scale.reset()
-        self.scale.setReferenceUnit(3280) # todo, make this a config
-        self.scale.tare()
-        print(self.scale.getWeight())
-
-        self.addr=addr
+    tare = 0
+    scale = 1000
+    last = 0;
+    
+    def __init__(self, root, SCALE=1000):
         self.root=root
-        self.chan=channel
+
+        pi = pigpio.pi()
+        if not pi.connected:
+            exit(0)
+
+        self.sensor = sensor(
+            pi, DATA=20, CLOCK=21, mode=lib.HX711.CH_A_GAIN_128)
+        self.scale = SCALE
+        self.tare()
+
+        self.CWidth=int(.75*W+20)
+        self.buffer = deque([], self.CWidth)
+
         self.var=IntVar()   #This is the select button for each channel
         self.var.set(1)
         self.val=DoubleVar()
-        self.val.set(self.scale.getWeight())
+        self.val.set(self.sample())
         self.valstring=StringVar()
         self.valstring.set(str(self.val.get()))
-        #off=H-2-17*SLICE+self.chan*SLICE
-        off=H-2-9*SLICE+self.chan*SLICE
+        off=H-2-(ADCHANNELS+FCHANNELS)*SLICE
         BG='#DDDFFFFFF'
-        self.CWidth=int(.75*W+20)
         self.a2df=Frame(self.root,bg=BG,bd=0,relief="ridge")
         self.a2df.place(x=0,y=off,width=W,height=SLICE)
         self.a2dc=Checkbutton(self.a2df,fg="Black",bg=BG,variable=self.var,onvalue = 1, offvalue = 0,command=self.cb)
         self.a2dc.grid(row=0,column=0,sticky="w")
         self.var.set(1)
-        self.a2dl = StringVar(root, value="Force Channel "+str(self.chan)+":")
+        self.a2dl = StringVar(root, value="Force:")
         self.a2dt = Label(self.a2df,textvariable=self.valstring,fg="Black",bg=BG,width=5).grid(row=0,column=2,sticky="w")
         self.a2dtxt=Entry(self.a2df,textvariable=self.a2dl,fg="Black",bg=BG,bd=0,relief="flat",width=12)
         self.a2dtxt.grid(row=0,column=1,sticky="w")
         self.a2dcanvas=Canvas(self.a2df,bg=BG,width=self.CWidth,height=SLICE,bd=0,relief="flat")
         self.a2dcanvas.grid(row=0,column=3,sticky="e")
-        self.maxrange=self.CWidth
-        self.log=list(range(self.maxrange))
-        for i in range(self.maxrange):
-            self.log[i]=0.0
-        self.nextPtr=0
+            
+    def tare(self):
+        n = 25
+        sum = 0.0;
+        for i in range(n):
+            time.sleep(0.1)
+            count, mode, reading = self.sensor.get_reading()
+            sum = sum + float(reading)
+        self.tare = sum / n;
+        return self.tare
         
     def cb(self):
         if (self.var==1):
@@ -52,18 +66,17 @@ class daqcForce:
     def Select(self):
         self.a2dc.select() 
         
+    def sample(self):
+        count, mode, reading = self.sensor.get_reading()
+        self.last = (reading - self.tare) / self.scale
+        self.buffer.append(self.last)
+        return self.last
+
     def update(self):
         if (self.var.get()==1):
-            #print(self.scale.getMeasure())
-            self.val.set(self.scale.getWeight())
-            #self.val.set(2.3)
-            self.valstring.set(str("{:5.3f}".format(self.val.get())))
-            self.log[self.nextPtr]=self.val.get()
-            self.nextPtr=(self.nextPtr+1)%self.maxrange
+            self.val.set(self.last)
+            self.valstring.set(str("{:5.1f}".format(self.last)))
             self.plot()
-            return self.val.get()
-        else:
-            return ''
 
     def descriptors(self):
         if (self.var.get()==1):
@@ -87,13 +100,12 @@ class daqcForce:
             self.a2dc.deselect()
             
     def plot(self):
-        points=list(range(2*self.CWidth))
-        for i in range(self.CWidth):
-            #j=(self.nextPtr-1+self.CWidth+i)%self.CWidth
-            #lval=int(self.log[j]*(SLICE-2)/4.096)
-            #lval=int((self.log[j]+12)/24*(SLICE-2))
-            lval=int((self.log[i]+12.0)/24.0)*(SLICE-2)
-            points[2*i]=i
-            points[2*i+1]=SLICE-1-lval
+        points = []
+        i = 0
+        for value in self.buffer:
+            points.append(i)
+            y = (1000-value) / 2000 * (SLICE-2)
+            points.append(int(y))
+            i = i+1
         self.a2dcanvas.delete("all")
         self.a2dcanvas.create_line(points, fill="#FF0000",width=2)

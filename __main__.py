@@ -55,7 +55,7 @@ def NewLogFile():
 def StartLog():
     global logFile, lfOpen, Logging, fName, SampleC, logHeader
     if ((lfOpen) and  (Logging==False)):
-        root.wm_title("DAQCplate Data Logger - LOGGING")
+        root.wm_title("TensilePi - LOGGING")
 
         Header="Time,"
         desc=['','','','','','','','']
@@ -88,7 +88,7 @@ def StopLog():
     global logFile, lfOpen, Logging
     if (Logging):
         Logging=False
-        root.wm_title("DAQCplate Data Logger")
+        root.wm_title("TensilePi")
         if (lfOpen):
             logFile.close()
             lfOpen=False
@@ -111,7 +111,6 @@ def shutDown():
     if (lfOpen):
         logFile.close()
     root.destroy()
-    GPIO.cleanup()
 
 #Configure: Dialog box to get sampling parameters that holds focus until closed.    
 def Configure():
@@ -167,33 +166,34 @@ def signalSetup():
     sigBox.grab_set()
     root.wait_window(sigBox) 
 
-def task():
+#sample all active channels
+def sample():
     global logFile, lfOpen, Logging, fName, SampleC, SampleT, logHeader
     global theta, dnum
     aChannelCount=0
     dChannelCount=0
     fChannelCount=0
-    try:
-        SampleT=float(SamplePeriod.get())
-        if (SampleT<SampleTmin):
-            SampleT=SampleTmin
-    except ValueError:
-        SampleT=SampleTmin
-    root.after(int(SampleT*1000),task)   
+    #try:
+    #    SampleT=float(SamplePeriod.get())
+    #    if (SampleT<SampleTmin):
+    #        SampleT=SampleTmin
+    #except ValueError:
+    #    SampleT=SampleTmin
+    root.after(int(SampleT*1000),sample)   
     date = datetime.now().strftime("%y-%m-%d %H:%M:%S.%f")[:-3]
     logString=date+','
     dTypes=''
     # loop removed
-    a2dvals=list(range(8))
+    a2dvals=list(range(ADCHANNELS))
     #dinvals=list(range(8))
     forcevals=list(range(1))
     #Retrieve and plot  values
-    a2dvals=daqc.a2dupdate() 
+    a2dvals=daqc.a2dsample() 
     #dinvals=daqc.dinupdate()
-    forcevals=daqc.forceupdate() 
+    forcevals=daqc.forcesample() 
             
     #Convert data to strings for log
-    for k in range(8):
+    for k in range(ADCHANNELS):
         if (a2dvals[k] != ''):
             logString=logString+str(a2dvals[k])+','
             aChannelCount += 1
@@ -222,11 +222,17 @@ def task():
            
     if (Logging):
         SampleC -= 1
-        root.wm_title("DAQCplate Data Logger - LOGGING - "+str(SampleC)+" Samples and "+str(SampleT*SampleC)+" Seconds Remaining")
+        root.wm_title("TensilePi - LOGGING - "+str(SampleC)+" Samples and "+str(SampleT*SampleC)+" Seconds Remaining")
         if (SampleC==0):
             StopLog()
             showinfo("Logging","Logging Complete")                                      
-            
+
+#update UI with values and plots
+def update():
+    root.after(int(UpdateT*1000),update)   
+    daqc.a2dupdate() 
+    daqc.forceupdate() 
+
 #doUpdates: a recurring routine to update the value of the displayed test duration value
 def doUpdates():
     root.after(500,doUpdates)   
@@ -235,6 +241,7 @@ def doUpdates():
     except ValueError:
         sDval.set('0') 
 
+UpdateT=0.3
 SampleT=0.1
 theta=[0,0,0,0,0,0,0,0]  
 dnum=[0,0,0,0,0,0,0,0]
@@ -295,7 +302,6 @@ DAQCpresent=list(range(8))
 DAQCFoundCount=0
 #daqcpage=range(8)
 
-SampleTmin=0
 focusSet=False
 rtn = DAQC.getADDR(0)
 DAQCpresent[0]=1
@@ -306,13 +312,6 @@ DAQC.setDAC(0,1,0)
 DAQC.setDAC(0,2,0)
 DAQC.setDAC(0,3,0)        
 daqc=daqcDASH(canvas,0)
-SampleTmin+=0.1
-
-
-if (SampleTmin>0):
-    SampleT=SampleTmin
-else:
-    SampleT=0.2
 
 SamplePeriod=StringVar()
 SamplePeriod.set(str(SampleT))
@@ -328,7 +327,8 @@ AoutSignal.set(0)
 DoutSignal=IntVar()
 DoutSignal.set(0)
     
-root.after(int(SampleT*1000),task) 
+root.after(int(SampleT*1000),sample) 
+root.after(int(UpdateT*1000),update) 
 
 root.after(500,doUpdates) 
       

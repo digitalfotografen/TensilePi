@@ -6,18 +6,18 @@ from lib.daqcForce import daqcForce
 
 class daqcDASH:
     def __init__(self,frame,addr):
-        self.a2d=list(range(8))
+        self.a2d=list(range(ADCHANNELS))
         #self.din=list(range(8))  
         self.force=list(range(8))
         
         def deSelect():
-            for i in range(0,8):
+            for i in range(0,ADCHANNELS):
                 self.a2d[i].deSelect()
                 #self.din[i].deSelect()
                 #self.force[i].deSelect()
                 
         def selectAll():
-            for i in range(0,8):        
+            for i in range(0,ADCHANNELS):
                 self.a2d[i].Select()
                 #self.din[i].Select()
                 #self.force[i].Select()
@@ -34,21 +34,25 @@ class daqcDASH:
         self.button2=Button(self.mFrame, text='Select All', command=selectAll)  
         self.button2.grid(row=0, column=1, padx=4,pady=5)
         
-        self.a2d=list(range(8))
+        self.a2d=list(range(ADCHANNELS))
         #self.din=list(range(8))  
         self.force=list(range(8))
-        for i in range(0,8):
+        for i in range(0,ADCHANNELS):
             self.a2d[i]=daqcADC(self.root,self.addr,i)
             #self.din[i]=daqcDIN(self.root,self.addr,i)      
         #onlye one force channel
         self.force=list(range(8))
-        self.force[0]=daqcForce(self.root,self.addr,0)
+        self.force[0]=daqcForce(self.root, SCALE=100)
     
-    def a2dupdate(self):
+    def a2dsample(self):
         vals=['','','','','','','','']
-        for i in range(0,8):
-            vals[i]=self.a2d[i].update()
+        for i in range(0,ADCHANNELS):
+            vals[i]=self.a2d[i].sample()
         return vals
+
+    def a2dupdate(self):
+        for i in range(0,ADCHANNELS):
+            self.a2d[i].update()
 
     '''
     def dinupdate(self):
@@ -58,15 +62,19 @@ class daqcDASH:
         return vals
     '''
 
-    def forceupdate(self):
+    def forcesample(self):
         vals=['','','','','','','','']
         #for i in range(1):
-        vals[0]=self.force[0].update()
+        vals[0]=self.force[0].sample()
         return vals
+
+    def forceupdate(self):
+        #for i in range(1):
+        self.force[0].update()
 
     def a2dDescriptors(self):
         vals=['','','','','','','','']
-        for i in range(0,8):
+        for i in range(0,ADCHANNELS):
             vals[i]=self.a2d[i].descriptors()
         return vals   
         
@@ -86,7 +94,7 @@ class daqcDASH:
         
     def a2dGetLabels(self):
         vals=['','','','','','','','']
-        for i in range(0,8):
+        for i in range(0,ADCHANNELS):
             vals[i]=self.a2d[i].getLabel()
         return vals   
         
@@ -106,7 +114,7 @@ class daqcDASH:
 
     def a2dGetStates(self):
         vals=['','','','','','','','']
-        for i in range(0,8):
+        for i in range(0,ADCHANNELS):
             vals[i]=self.a2d[i].getState()
         return vals   
         
@@ -126,7 +134,7 @@ class daqcDASH:
 
     def a2dSetLabels(self,labels):
         self.vals=labels
-        for i in range(0,8):
+        for i in range(0,ADCHANNELS):
             self.a2d[i].setLabel(self.vals[i])
         return   
         
@@ -146,7 +154,7 @@ class daqcDASH:
 
     def a2dSetStates(self,states):
         self.vals=states
-        for i in range(0,8):
+        for i in range(0,ADCHANNELS):
             self.a2d[i].setState(self.vals[i])
         return   
         
