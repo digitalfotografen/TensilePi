@@ -1,10 +1,10 @@
 #!/usr/bin/python3
-import time
-from datetime import datetime
 import os
 import string
 import subprocess
 import sys
+import time
+from datetime import datetime
 
 from tkinter import *
 from tkinter import filedialog
@@ -17,7 +17,7 @@ import math
 import imp
 import statistics
 
-from lib.singeltons import *
+from lib.globals import *
 from lib.daqcAdc import daqcADC
 from lib.daqcDin import daqcDIN
 from lib.daqcDash import daqcDASH
@@ -234,8 +234,9 @@ def update():
             StopLog()
             showinfo("Logging","Logging Complete")                                      
 
-UpdateT=0.3
-SampleT=0.1
+# Main program
+UpdateT = config.getfloat('Main','update_t', fallback=0.3)
+SampleT = config.getfloat('Main','sample_t', fallback=0.1)
 theta=[0,0,0,0,0,0,0,0]  
 dnum=[0,0,0,0,0,0,0,0]
 SampleC=0
@@ -281,12 +282,6 @@ def callback():
     print ("click!")
 
 
-#notebook = Pmw.NoteBook(root,borderwidth=2,pagemargin=2)
-#notebook.pack(fill = 'both', expand = 1)
-#off=0
-#frame=Frame(root,bd=0,relief="ridge")
-#frame.place(x=0,y=off,width=W,height=H)   
-
 canvas = Canvas(root, width=W, height=H)
 canvas.pack()
 
@@ -322,6 +317,6 @@ DoutSignal=IntVar()
 DoutSignal.set(0)
     
 root.after(int(SampleT*1000),sample) 
-root.after(int(UpdateT*1000),update) 
+root.after(int(UpdateT*1000),update)
       
 root.mainloop()        

@@ -1,5 +1,5 @@
 from tkinter import *
-from lib.singeltons import *
+from lib.globals import *
 from lib.daqcAdc import daqcADC
 #from lib.daqcDin import daqcDIN
 from lib.daqcForce import daqcForce
@@ -38,11 +38,24 @@ class daqcDASH:
         #self.din=list(range(8))  
         self.force=list(range(8))
         for i in range(0,ADCHANNELS):
-            self.a2d[i]=daqcADC(self.root,self.addr,i)
+            section='ADC'+str(i)
+            scale = config.getfloat(section,'scale',fallback=1.0)
+            range_min = config.getfloat(section,'range_min',fallback=-12.0)
+            range_max = config.getfloat(section,'range_max',fallback=12.0)
+            self.a2d[i] = daqcADC(self.root,
+                                  self.addr,
+                                  i,
+                                  SCALE=scale,
+                                  RANGE_MIN=range_min,
+                                  RANGE_MAX=range_max)
             #self.din[i]=daqcDIN(self.root,self.addr,i)      
         #onlye one force channel
         self.force=list(range(8))
-        self.force[0]=daqcForce(self.root, SCALE=600/9.81)
+        print(config.getfloat('Force','scale',fallback=1))
+        scale = config.getfloat('Force','scale',fallback=1.0)
+        range_min = config.getfloat('Force','range_min',fallback=-12.0)
+        range_max = config.getfloat('Force','range_max',fallback=12.0)
+        self.force[0]=daqcForce(self.root,SCALE=scale,RANGE_MIN=range_min,RANGE_MAX=range_max)
     
     def a2dsample(self):
         vals=['','','','','','','','']
