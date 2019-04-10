@@ -7,19 +7,22 @@ import pigpio # http://abyz.co.uk/rpi/pigpio/python.html
 from collections import deque
 
 class daqcForce:
-    tare = 0
-    scale = 1000
-    last = 0;
+    offset = 0
+    scale = 5.2
+    last = 0
+    last_reading = 0 
+    range_min = -1000
+    range_max = 50000
     
-    def __init__(self, root, SCALE=1000):
+    def __init__(self, root, SCALE=1000, DATA_PIN=20, SCLK_PIN=21):
         self.root=root
-
+            
         pi = pigpio.pi()
         if not pi.connected:
             exit(0)
 
         self.sensor = sensor(
-            pi, DATA=20, CLOCK=21, mode=lib.HX711.CH_A_GAIN_128)
+            pi, DATA=20, CLOCK=21, mode=lib.HX711.CH_A_GAIN_64)
         self.scale = SCALE
         self.tare()
 
@@ -37,24 +40,33 @@ class daqcForce:
         self.a2df=Frame(self.root,bg=BG,bd=0,relief="ridge")
         self.a2df.place(x=0,y=off,width=W,height=SLICE)
         self.a2dc=Checkbutton(self.a2df,fg="Black",bg=BG,variable=self.var,onvalue = 1, offvalue = 0,command=self.cb)
-        self.a2dc.grid(row=0,column=0,sticky="w")
+        #self.a2dc.grid(row=0,column=0,sticky="w")
         self.var.set(1)
+        
+        self.button1=Button(self.a2df, text='Tare', command=self.tare)
+        self.button1.grid(row=0, column=0, padx=2,pady=2)
+
         self.a2dl = StringVar(root, value="Force:")
-        self.a2dt = Label(self.a2df,textvariable=self.valstring,fg="Black",bg=BG,width=5).grid(row=0,column=2,sticky="w")
-        self.a2dtxt=Entry(self.a2df,textvariable=self.a2dl,fg="Black",bg=BG,bd=0,relief="flat",width=12)
+        self.a2dt = Label(self.a2df,textvariable=self.valstring,fg="Black",bg=BG,width=11).grid(row=0,column=2,sticky="w")
+        self.a2dtxt=Entry(self.a2df,textvariable=self.a2dl,fg="Black",bg=BG,bd=0,relief="flat",width=6)
         self.a2dtxt.grid(row=0,column=1,sticky="w")
         self.a2dcanvas=Canvas(self.a2df,bg=BG,width=self.CWidth,height=SLICE,bd=0,relief="flat")
         self.a2dcanvas.grid(row=0,column=3,sticky="e")
             
     def tare(self):
+        sum = 0.0
         n = 25
-        sum = 0.0;
+        print("Tare in process")
+        count, mode, self.last_reading = self.sensor.get_reading()
+        if (self.last_reading == 0):
+            time.sleep(1.0)
         for i in range(n):
             time.sleep(0.1)
-            count, mode, reading = self.sensor.get_reading()
-            sum = sum + float(reading)
-        self.tare = sum / n;
-        return self.tare
+            count, mode, self.last_reading = self.sensor.get_reading()
+            sum = sum + float(self.last_reading)
+        self.offset = sum / n;
+        print("Offset: ",self.offset)
+        return self.offset
         
     def cb(self):
         if (self.var==1):
@@ -68,7 +80,11 @@ class daqcForce:
         
     def sample(self):
         count, mode, reading = self.sensor.get_reading()
-        self.last = (reading - self.tare) / self.scale
+        if (abs(reading - self.last_reading) < 1000000):
+            self.last_reading = reading
+            self.last = (self.offset - self.last_reading) / self.scale
+        else:
+            print("HX711 reading error")
         self.buffer.append(self.last)
         return self.last
 
@@ -104,7 +120,7 @@ class daqcForce:
         i = 0
         for value in self.buffer:
             points.append(i)
-            y = (1000-value) / 2000 * (SLICE-2)
+            y = (self.range_max - value) / (self.range_max - self.range_min) * (SLICE-2)
             points.append(int(y))
             i = i+1
         self.a2dcanvas.delete("all")

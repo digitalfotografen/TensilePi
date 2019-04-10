@@ -106,7 +106,7 @@ def About():
     about.show() 
 
 def shutDown():
-    global lfOpen, Logging, GPIO
+    global lfOpen, Logging
     StopLog()
     if (lfOpen):
         logFile.close()
@@ -218,14 +218,9 @@ def sample():
         #logString = logString[:-1]
         #logString = time.strftime("%H:%M:%S",time.localtime())+','+logString
         logFile.write(logString)
-        logFile.write('\n')        
+        logFile.write('\n')
+        SampleC -=1
            
-    if (Logging):
-        SampleC -= 1
-        root.wm_title("TensilePi - LOGGING - "+str(SampleC)+" Samples and "+str(SampleT*SampleC)+" Seconds Remaining")
-        if (SampleC==0):
-            StopLog()
-            showinfo("Logging","Logging Complete")                                      
 
 #update UI with values and plots
 def update():
@@ -233,13 +228,11 @@ def update():
     daqc.a2dupdate() 
     daqc.forceupdate() 
 
-#doUpdates: a recurring routine to update the value of the displayed test duration value
-def doUpdates():
-    root.after(500,doUpdates)   
-    try:
-        sDval.set(str(float(SamplePeriod.get())*float(SampleCount.get())))
-    except ValueError:
-        sDval.set('0') 
+    if (Logging):
+        root.wm_title("TensilePi - LOGGING - "+str(SampleC)+" Samples and "+str(int(SampleT*SampleC))+" Seconds Remaining")
+        if (SampleC==0):
+            StopLog()
+            showinfo("Logging","Logging Complete")                                      
 
 UpdateT=0.3
 SampleT=0.1
@@ -297,7 +290,8 @@ def callback():
 canvas = Canvas(root, width=W, height=H)
 canvas.pack()
 
-DAQCpresent=list(range(8))
+#DAQCpresent=list(range(8))
+DAQCpresent=[1,0,0,0,0,0,0,0]
 #daqc=list(range(8))
 DAQCFoundCount=0
 #daqcpage=range(8)
@@ -317,7 +311,7 @@ SamplePeriod=StringVar()
 SamplePeriod.set(str(SampleT))
 
 SampleCount=StringVar()
-SampleCount.set('1000')
+SampleCount.set('36000')
 
 sDval=StringVar()
 sDval.set(str(float(SamplePeriod.get())*float(SampleCount.get())))
@@ -329,7 +323,5 @@ DoutSignal.set(0)
     
 root.after(int(SampleT*1000),sample) 
 root.after(int(UpdateT*1000),update) 
-
-root.after(500,doUpdates) 
       
 root.mainloop()        

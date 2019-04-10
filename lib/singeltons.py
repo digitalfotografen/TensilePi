@@ -8,9 +8,14 @@ import time
 # choose pins on rpi (BCM5 and BCM6)
 #hx = HX711(dout=5, pd_sck=6)
 
-import piplates.DAQC2plate as DAQC
+try:
+    import piplates.DAQC2plate as DAQC
+except ImportError:
+    print("error importingh piplates.DAQC2plate")
+    os.system("lxterminal -e 'python py23install.py'")
+    sys.exit()
 
-W=900
+W=1000
 H=800
 #SLICE=33
 SLICE=190

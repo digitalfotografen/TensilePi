@@ -42,7 +42,7 @@ class daqcDASH:
             #self.din[i]=daqcDIN(self.root,self.addr,i)      
         #onlye one force channel
         self.force=list(range(8))
-        self.force[0]=daqcForce(self.root, SCALE=100)
+        self.force[0]=daqcForce(self.root, SCALE=600/9.81)
     
     def a2dsample(self):
         vals=['','','','','','','','']
