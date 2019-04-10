@@ -1,5 +1,5 @@
 from tkinter import *
-from lib.singeltons import *
+from lib.globals import *
 import lib.HX711
 from lib.HX711 import sensor
 import time
@@ -8,13 +8,10 @@ from collections import deque
 
 class daqcForce:
     offset = 0
-    scale = 5.2
     last = 0
     last_reading = 0 
-    range_min = -1000
-    range_max = 50000
     
-    def __init__(self, root, SCALE=1000, DATA_PIN=20, SCLK_PIN=21):
+    def __init__(self, root, SCALE=1, DATA_PIN=20, SCLK_PIN=21, RANGE_MIN = -1000, RANGE_MAX = 5000):
         self.root=root
             
         pi = pigpio.pi()
@@ -22,8 +19,10 @@ class daqcForce:
             exit(0)
 
         self.sensor = sensor(
-            pi, DATA=20, CLOCK=21, mode=lib.HX711.CH_A_GAIN_64)
+            pi, DATA=DATA_PIN, CLOCK=SCLK_PIN, mode=lib.HX711.CH_A_GAIN_64)
         self.scale = SCALE
+        self.range_min = RANGE_MIN
+        self.range_max = RANGE_MAX
         self.tare()
 
         self.CWidth=int(.75*W+20)

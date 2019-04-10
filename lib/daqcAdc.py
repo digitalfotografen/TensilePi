@@ -1,20 +1,19 @@
 from tkinter import *
-from lib.singeltons import *
+from lib.globals import *
 from collections import deque
 global hx
 
 class daqcADC:
     last = 0.0;
     offset = 0
-    #scale = 1
-    scale = 0.03992
-    range_min = -50
-    range_max = 250
     
-    def __init__(self,root,addr,channel):
+    def __init__(self,root,addr,channel,SCALE=1,RANGE_MIN=-15,RANGE_MAX=15):
         self.addr=addr
         self.root=root
         self.chan=channel
+        self.scale=SCALE
+        self.range_min = RANGE_MIN
+        self.range_max = RANGE_MAX
         self.last = 0.0
         self.var=IntVar()   #This is the select button for each channel
         self.var.set(1)

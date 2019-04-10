@@ -1,5 +1,5 @@
 from tkinter import *
-from lib.singeltons import *
+from lib.globals import *
 
 class daqcDIN:
     def __init__(self,root,addr,channel):

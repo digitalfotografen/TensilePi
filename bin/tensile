@@ -1,0 +1,4 @@
+#!/bin/bash
+
+BINPATH=`dirname $0`
+python3 "/home/pi/TensilePi/__main__.py" $@
