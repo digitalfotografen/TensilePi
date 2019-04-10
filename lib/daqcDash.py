@@ -24,7 +24,7 @@ class daqcDASH:
             
         self.addr=addr
         self.root=frame
-        
+        '''        
         BG='#888FFF888'
         off=0
         self.mFrame=Frame(self.root,bg=BG,bd=0,relief="ridge")
@@ -33,7 +33,7 @@ class daqcDASH:
         self.button1.grid(row=0, column=0, padx=4,pady=5)
         self.button2=Button(self.mFrame, text='Select All', command=selectAll)  
         self.button2.grid(row=0, column=1, padx=4,pady=5)
-        
+        '''        
         self.a2d=list(range(ADCHANNELS))
         #self.din=list(range(8))  
         self.force=list(range(8))
