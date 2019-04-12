@@ -11,7 +11,7 @@ class daqcForce:
     last = 0
     last_reading = 0 
     
-    def __init__(self, root, SCALE=1, DATA_PIN=20, SCLK_PIN=21, RANGE_MIN = -1000, RANGE_MAX = 5000):
+    def __init__(self, root, SCALE=1, DATA_PIN=20, SCLK_PIN=21, RANGE_MIN = -1000, RANGE_MAX = 5000, LABEL='F'):
         self.root=root
             
         pi = pigpio.pi()
@@ -37,10 +37,10 @@ class daqcForce:
         self.a2df=Frame(self.root,bg=BG,bd=0,relief="ridge")
         self.a2df.place(x=0,y=off,width=W,height=SLICE)
         
-        self.button1=Button(self.a2df, text='Tare', command=self.tare)
+        self.button1=Button(self.a2df, text='0', command=self.tare)
         self.button1.grid(row=0, column=0, padx=2,pady=2)
 
-        self.a2dl = StringVar(root, value="Force:")
+        self.a2dl = StringVar(root, value=LABEL)
         self.a2dt = Label(self.a2df,textvariable=self.valstring,fg="Black",bg=BG,width=11).grid(row=0,column=2,sticky="w")
         self.a2dtxt=Entry(self.a2df,textvariable=self.a2dl,fg="Black",bg=BG,bd=0,relief="flat",width=6)
         self.a2dtxt.grid(row=0,column=1,sticky="w")
@@ -78,10 +78,7 @@ class daqcForce:
         self.plot()
 
     def descriptors(self):
-        if (self.var.get()==1):
-            return self.a2dl.get()
-        else:
-            return ''
+        return self.a2dl.get()
 
     def getLabel(self):
         return self.a2dl.get()

@@ -7,7 +7,7 @@ class daqcADC:
     last = 0.0;
     offset = 0
     
-    def __init__(self,root,addr,channel,SCALE=1,RANGE_MIN=-15,RANGE_MAX=15):
+    def __init__(self,root,addr,channel,SCALE=1,RANGE_MIN=-15,RANGE_MAX=15,LABEL='A'):
         self.addr=addr
         self.root=root
         self.chan=channel
@@ -25,10 +25,10 @@ class daqcADC:
         self.a2df=Frame(self.root,bg=BG,bd=0,relief="ridge")
         self.a2df.place(x=0,y=off,width=W,height=SLICE)
 
-        self.button1=Button(self.a2df, text='Tare', command=self.tare)
+        self.button1=Button(self.a2df, text='0', command=self.tare)
         self.button1.grid(row=0, column=0, padx=2,pady=2)
 
-        self.a2dl = StringVar(root, value="A2D Channel "+str(self.chan)+":")
+        self.a2dl = StringVar(root, value=LABEL)
         self.a2dt = Label(self.a2df,textvariable=self.valstring,fg="Black",bg=BG,width=5).grid(row=0,column=2,sticky="w")
         self.a2dtxt=Entry(self.a2df,textvariable=self.a2dl,fg="Black",bg=BG,bd=0,relief="flat",width=12)
         self.a2dtxt.grid(row=0,column=1,sticky="w")
