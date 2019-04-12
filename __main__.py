@@ -4,6 +4,7 @@ import string
 import subprocess
 import sys
 import time
+import csv
 from datetime import datetime
 
 from tkinter import *
@@ -24,14 +25,15 @@ from lib.daqcDash import daqcDASH
 
 # define options for opening or saving a log file
 newlogfile_opt = options = {}
-options['defaultextension'] = '.log'
-options['filetypes'] = [('log files', '.log')]
+options['defaultextension'] = '.csv'
+options['filetypes'] = [('csv files', '.csv')]
 options['title'] = 'Open new log file'
+options['initialdir'] = "~/Documents"
 
 # define options for opening or saving an existing log file
 xlogfile_opt = options = {}
-options['defaultextension'] = '.log'
-options['filetypes'] = [('log files', '.log')]
+options['defaultextension'] = '.csv'
+options['filetypes'] = [('csv files', '.csv')]
 options['title'] = 'Open existing log file'
 
 # define options for opening or saving a setup file
@@ -49,33 +51,19 @@ def NewLogFile():
     if (Logging==False):
         fName=''
         fName=filedialog.asksaveasfilename(**newlogfile_opt)
-        if ('.log' in fName):
+        if ('.csv' in fName):
             lfOpen=True
     
 def StartLog():
-    global logFile, lfOpen, Logging, fName, SampleC, logHeader
+    global logFile, lfOpen, Logging, fName, SampleC, csvfile
     if ((lfOpen) and  (Logging==False)):
-        root.wm_title("TensilePi - LOGGING")
-
-        Header="Time,"
-        desc=['','','','','','','','']
-        desc=daqc.a2dDescriptors()
-        for k in range(8):
-            if (desc[k] != ''):
-                Header= Header+'DAQC'+'.'+desc[k]+','
-        desc=['','','','','','','','']
-        '''
-        desc=daqc.dinDescriptors()
-        for k in range(8):
-            if (desc[k] != ''):
-                Header= Header+'DAQC'+'.'+desc[k]+','
-        '''        
-        Header = Header[:-1] 
-        logHeader=Header
+        logHeader = ["DateTime"]
+        logHeader += daqc.a2dGetLabels()
+        logHeader += daqc.forceGetLabels()
         if (lfOpen):
             logFile=open(fName,'w')
-            logFile.write(Header)
-            logFile.write('\n')
+            csvfile = csv.writer(logFile, dialect='excel-tab')
+            csvfile.writerow(tuple(logHeader))
         Logging=True   
         SampleC=int(SampleCount.get())
     else:
@@ -85,7 +73,7 @@ def StartLog():
         )
     
 def StopLog():
-    global logFile, lfOpen, Logging
+    global logFile, lfOpen, Logging, csvfile
     if (Logging):
         Logging=False
         root.wm_title("TensilePi")
@@ -168,65 +156,30 @@ def signalSetup():
 
 #sample all active channels
 def sample():
-    global logFile, lfOpen, Logging, fName, SampleC, SampleT, logHeader
+    global logFile, lfOpen, Logging, fName, SampleC, SampleT, csvfile
     global theta, dnum
-    aChannelCount=0
-    dChannelCount=0
-    fChannelCount=0
     root.after(int(SampleT*1000),sample)   
     date = datetime.now().strftime("%y-%m-%d %H:%M:%S.%f")[:-3]
-    logString=date+','
-    dTypes=''
-    # loop removed
     a2dvals=list(range(ADCHANNELS))
     #dinvals=list(range(8))
     forcevals=list(range(1))
-    #Retrieve and plot  values
     a2dvals=daqc.a2dsample() 
-    #dinvals=daqc.dinupdate()
+    #dinvals=daqc.dinsample()
     forcevals=daqc.forcesample() 
             
-    #Convert data to strings for log
-    for k in range(ADCHANNELS):
-        if (a2dvals[k] != ''):
-            logString=logString+str(a2dvals[k])+','
-            aChannelCount += 1
-            dTypes = dTypes+'a,'
-    '''
-    for k in range(8):
-        if (dinvals[k] != ''):
-            logString=logString+str(dinvals[k])+','
-            dChannelCount += 1
-            dTypes = dTypes+'d,'
-    '''        
-    for k in range(1):
-        if (forcevals[k] != ''):
-            logString=logString+str(forcevals[k])+','
-            fChannelCount += 1
-            dTypes = dTypes+'d,'
-     
-    dtypes = dTypes[:-1]
-    #logString = logString[:-1] 
-    #logString = time.strftime("%H:%M:%S.%f")[:-3]+','+logString    
     if (Logging and lfOpen):
-        #logString = logString[:-1]
-        #logString = time.strftime("%H:%M:%S",time.localtime())+','+logString
-        logFile.write(logString)
-        logFile.write('\n')
-        SampleC -=1
+        csvfile.writerow(tuple([date] + a2dvals + forcevals))
+        SampleC +=1
            
-
 #update UI with values and plots
 def update():
+    global fName
     root.after(int(UpdateT*1000),update)   
     daqc.a2dupdate() 
     daqc.forceupdate() 
 
     if (Logging):
-        root.wm_title("TensilePi - LOGGING - "+str(SampleC)+" Samples and "+str(int(SampleT*SampleC))+" Seconds Remaining")
-        if (SampleC==0):
-            StopLog()
-            showinfo("Logging","Logging Complete")                                      
+        root.wm_title("TensilePi - " + fName + " - " +str(SampleC)+" Samples and "+str(int(SampleT*SampleC))+" Seconds")
 
 # Main program
 UpdateT = config.getfloat('Main','update_t', fallback=0.3)
@@ -237,8 +190,8 @@ SampleC=0
 logFile=0
 lfOpen=False
 Logging=False
-logHeader=''
 fName=''
+csvfile=0
             
 root = Tk()
 root.resizable(0,0)
@@ -295,7 +248,7 @@ SamplePeriod=StringVar()
 SamplePeriod.set(str(SampleT))
 
 SampleCount=StringVar()
-SampleCount.set('36000')
+SampleCount.set('0')
 
 sDval=StringVar()
 sDval.set(str(float(SamplePeriod.get())*float(SampleCount.get())))
