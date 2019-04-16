@@ -10,6 +10,8 @@ class daqcForce:
     offset = 0
     last = 0
     last_reading = 0
+    min = 0
+    max = 0
     
     def __init__(self, root, SCALE=1, DATA_PIN=20, SCLK_PIN=21, RANGE_MIN = -1000, RANGE_MAX = 5000, LABEL='F'):
         self.root=root
@@ -23,29 +25,38 @@ class daqcForce:
         self.scale = SCALE
         self.range_min = RANGE_MIN
         self.range_max = RANGE_MAX
-        self.tare()
 
-        self.CWidth=int(.75*W+20)
+        self.CWidth=int(.83*W+20)
         self.buffer = deque([], self.CWidth)
 
+        self.minval=DoubleVar()
+        self.maxval=DoubleVar()
         self.val=DoubleVar()
-        self.val.set(self.sample())
-        self.valstring=StringVar()
-        self.valstring.set(str(self.val.get()))
+
         off=H-2-(ADCHANNELS+FCHANNELS)*SLICE
         BG='#FFFFFFFFF'
-        self.a2df=Frame(self.root,bg=BG,bd=0,relief="ridge")
+        self.a2df=Frame(self.root,bg=BG,bd=1,relief="ridge")
         self.a2df.place(x=0,y=off,width=W,height=SLICE)
         
         self.button1=Button(self.a2df, text='0', command=self.tare)
-        self.button1.grid(row=0, column=0, padx=2,pady=2)
+        self.button1.grid(row=4, column=0, padx=2,pady=2)
 
         self.a2dl = StringVar(root, value=LABEL)
-        self.a2dt = Label(self.a2df,textvariable=self.valstring,fg="Black",bg=BG,width=12).grid(row=0,column=2,sticky="w")
-        self.a2dtxt=Label(self.a2df,textvariable=self.a2dl,fg="Black",bg=BG,bd=0,width=8)
-        self.a2dtxt.grid(row=0,column=1,sticky="w")
+        self.a2dtxt=Label(self.a2df,textvariable=self.a2dl,fg="Black",bg=BG,bd=0,width=12,font="-weight bold")
+        self.a2dtxt.grid(row=0,column=0,columnspan=2,sticky="w")
+        self.a2dt = Label(self.a2df,textvariable=self.val,fg="Black",bg=BG,width=12,font="-weight bold")
+        self.a2dt.grid(row=1,column=0,columnspan=2,sticky="w")
+
+        self.a2minLabel=Label(self.a2df,text="Min",fg="Black",bg=BG,bd=0,width=5).grid(row=2,column=0,sticky="w")
+        self.a2min = Label(self.a2df,textvariable=self.minval,fg="Black",bg=BG,width=5)
+        self.a2min.grid(row=2,column=1)
+        self.a2maxLabel=Label(self.a2df,text="Max",fg="Black",bg=BG,bd=0,width=5).grid(row=3,column=0,sticky="w")
+        self.a2max = Label(self.a2df,textvariable=self.maxval,fg="Black",bg=BG,width=5)
+        self.a2max.grid(row=3,column=1)
+
         self.a2dcanvas=Canvas(self.a2df,bg=BG,width=self.CWidth,height=SLICE,bd=0,relief="flat")
-        self.a2dcanvas.grid(row=0,column=3,sticky="e")
+        self.a2dcanvas.grid(row=0,rowspan=5,column=2,sticky="e")
+        self.tare()
             
     def tare(self):
         sum = 0.0
@@ -60,21 +71,28 @@ class daqcForce:
             sum = sum + float(self.last_reading)
         self.offset = sum / n;
         print("Offset: ",self.offset)
+        self.min = 0.0
+        self.max = 0.0
         return self.offset
         
     def sample(self):
         count, mode, reading = self.sensor.get_reading()
-        if (abs(reading - self.last_reading) < 1000000):
-            self.last_reading = reading
-            self.last = (self.offset - self.last_reading) / self.scale
-        else:
+        if (abs(reading - self.last_reading) > 100000):
+            count, mode, reading = self.sensor.get_reading()
             print("HX711 reading error")
+        self.last_reading = reading
+        self.last = round((self.offset - self.last_reading) / self.scale, 5)
         self.buffer.append(self.last)
-        return round(self.last, 3)
+        if self.last < self.min:
+            self.min = self.last
+        if self.last > self.max:
+            self.max = self.last
+        return self.last
 
     def update(self):
-        self.val.set(self.last)
-        self.valstring.set(str("{:5.1f}".format(self.last)))
+        self.val.set(round(self.last,1))
+        self.minval.set(round(self.min,1))
+        self.maxval.set(round(self.max,1))
         self.plot()
 
     def getLabel(self):
