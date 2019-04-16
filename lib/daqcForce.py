@@ -11,7 +11,7 @@ class daqcForce:
     last = 0
     last_reading = 0 
     
-    def __init__(self, root, SCALE=1, DATA_PIN=20, SCLK_PIN=21, RANGE_MIN = -1000, RANGE_MAX = 5000):
+    def __init__(self, root, SCALE=1, DATA_PIN=20, SCLK_PIN=21, RANGE_MIN = -1000, RANGE_MAX = 5000, LABEL='F'):
         self.root=root
             
         pi = pigpio.pi()
@@ -28,8 +28,6 @@ class daqcForce:
         self.CWidth=int(.75*W+20)
         self.buffer = deque([], self.CWidth)
 
-        self.var=IntVar()   #This is the select button for each channel
-        self.var.set(1)
         self.val=DoubleVar()
         self.val.set(self.sample())
         self.valstring=StringVar()
@@ -38,14 +36,11 @@ class daqcForce:
         BG='#DDDFFFFFF'
         self.a2df=Frame(self.root,bg=BG,bd=0,relief="ridge")
         self.a2df.place(x=0,y=off,width=W,height=SLICE)
-        self.a2dc=Checkbutton(self.a2df,fg="Black",bg=BG,variable=self.var,onvalue = 1, offvalue = 0,command=self.cb)
-        #self.a2dc.grid(row=0,column=0,sticky="w")
-        self.var.set(1)
         
-        self.button1=Button(self.a2df, text='Tare', command=self.tare)
+        self.button1=Button(self.a2df, text='0', command=self.tare)
         self.button1.grid(row=0, column=0, padx=2,pady=2)
 
-        self.a2dl = StringVar(root, value="Force:")
+        self.a2dl = StringVar(root, value=LABEL)
         self.a2dt = Label(self.a2df,textvariable=self.valstring,fg="Black",bg=BG,width=11).grid(row=0,column=2,sticky="w")
         self.a2dtxt=Entry(self.a2df,textvariable=self.a2dl,fg="Black",bg=BG,bd=0,relief="flat",width=6)
         self.a2dtxt.grid(row=0,column=1,sticky="w")
@@ -67,16 +62,6 @@ class daqcForce:
         print("Offset: ",self.offset)
         return self.offset
         
-    def cb(self):
-        if (self.var==1):
-            a=1
-            
-    def deSelect(self):
-        self.a2dc.deselect()
-
-    def Select(self):
-        self.a2dc.select() 
-        
     def sample(self):
         count, mode, reading = self.sensor.get_reading()
         if (abs(reading - self.last_reading) < 1000000):
@@ -88,32 +73,19 @@ class daqcForce:
         return self.last
 
     def update(self):
-        if (self.var.get()==1):
-            self.val.set(self.last)
-            self.valstring.set(str("{:5.1f}".format(self.last)))
-            self.plot()
+        self.val.set(self.last)
+        self.valstring.set(str("{:5.1f}".format(self.last)))
+        self.plot()
 
     def descriptors(self):
-        if (self.var.get()==1):
-            return self.a2dl.get()
-        else:
-            return ''
+        return self.a2dl.get()
 
     def getLabel(self):
         return self.a2dl.get()
 
     def setLabel(self,label):
         self.a2dl.set(label)        
-        
-    def getState(self):
-        return self.var.get()        
- 
-    def setState(self,state):
-        if (state=='1'):
-            self.a2dc.select()
-        else:
-            self.a2dc.deselect()
-            
+                    
     def plot(self):
         points = []
         i = 0
@@ -122,5 +94,6 @@ class daqcForce:
             y = (self.range_max - value) / (self.range_max - self.range_min) * (SLICE-2)
             points.append(int(y))
             i = i+1
-        self.a2dcanvas.delete("all")
-        self.a2dcanvas.create_line(points, fill="#FF0000",width=2)
+        if (len(points) > 4):
+            self.a2dcanvas.delete("all")
+            self.a2dcanvas.create_line(points, fill="#FF0000",width=2)

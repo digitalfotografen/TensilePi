@@ -173,12 +173,6 @@ def sample():
     aChannelCount=0
     dChannelCount=0
     fChannelCount=0
-    #try:
-    #    SampleT=float(SamplePeriod.get())
-    #    if (SampleT<SampleTmin):
-    #        SampleT=SampleTmin
-    #except ValueError:
-    #    SampleT=SampleTmin
     root.after(int(SampleT*1000),sample)   
     date = datetime.now().strftime("%y-%m-%d %H:%M:%S.%f")[:-3]
     logString=date+','
@@ -266,11 +260,6 @@ filemenu.add_command(label="Open New File for Logging", command=NewLogFile)
 filemenu.add_separator()
 filemenu.add_command(label="Exit", command=shutDown)
 
-setupmenu = Menu(menu,tearoff=0)
-menu.add_cascade(label="Setup", menu=setupmenu)
-setupmenu.add_command(label="Logging", command=Configure)
-setupmenu.add_command(label="Test Signals", command=signalSetup)
-  
 menu.add_command(label="START", foreground='green',font="-weight bold", command=StartLog)
 
 menu.add_command(label="STOP", foreground='red',font="-weight bold",command=StopLog)

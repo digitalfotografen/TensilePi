@@ -24,7 +24,7 @@ class daqcDASH:
             
         self.addr=addr
         self.root=frame
-        
+        '''        
         BG='#888FFF888'
         off=0
         self.mFrame=Frame(self.root,bg=BG,bd=0,relief="ridge")
@@ -33,12 +33,13 @@ class daqcDASH:
         self.button1.grid(row=0, column=0, padx=4,pady=5)
         self.button2=Button(self.mFrame, text='Select All', command=selectAll)  
         self.button2.grid(row=0, column=1, padx=4,pady=5)
-        
+        '''        
         self.a2d=list(range(ADCHANNELS))
         #self.din=list(range(8))  
         self.force=list(range(8))
         for i in range(0,ADCHANNELS):
             section='ADC'+str(i)
+            label = config.get(section, 'label', fallback=section)
             scale = config.getfloat(section,'scale',fallback=1.0)
             range_min = config.getfloat(section,'range_min',fallback=-12.0)
             range_max = config.getfloat(section,'range_max',fallback=12.0)
@@ -47,15 +48,17 @@ class daqcDASH:
                                   i,
                                   SCALE=scale,
                                   RANGE_MIN=range_min,
-                                  RANGE_MAX=range_max)
+                                  RANGE_MAX=range_max,
+                                  LABEL=label)
             #self.din[i]=daqcDIN(self.root,self.addr,i)      
         #onlye one force channel
         self.force=list(range(8))
-        print(config.getfloat('Force','scale',fallback=1))
-        scale = config.getfloat('Force','scale',fallback=1.0)
-        range_min = config.getfloat('Force','range_min',fallback=-12.0)
-        range_max = config.getfloat('Force','range_max',fallback=12.0)
-        self.force[0]=daqcForce(self.root,SCALE=scale,RANGE_MIN=range_min,RANGE_MAX=range_max)
+        print(config.getfloat('F1','scale',fallback=1))
+        label = config.get('F1','label',fallback='F1')
+        scale = config.getfloat('F1','scale',fallback=1.0)
+        range_min = config.getfloat('F1','range_min',fallback=-12.0)
+        range_max = config.getfloat('F1','range_max',fallback=12.0)
+        self.force[0]=daqcForce(self.root,SCALE=scale,RANGE_MIN=range_min,RANGE_MAX=range_max,LABEL=label)
     
     def a2dsample(self):
         vals=['','','','','','','','']
