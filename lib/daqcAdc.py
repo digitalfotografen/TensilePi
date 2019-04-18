@@ -5,15 +5,15 @@ global hx
 
 class daqcADC:
     last = 0.0;
-    offset = 0
     min = 0
     max = 0
     
-    def __init__(self,root,addr,channel,SCALE=1,RANGE_MIN=-15,RANGE_MAX=15,LABEL='A'):
+    def __init__(self,root,addr,channel,SCALE=1,RANGE_MIN=-15,RANGE_MAX=15,OFFSET=0.0,LABEL='A'):
         self.addr=addr
         self.root=root
         self.chan=channel
         self.scale=SCALE
+        self.offset=OFFSET
         self.range_min = RANGE_MIN
         self.range_max = RANGE_MAX
         self.last = 0.0
