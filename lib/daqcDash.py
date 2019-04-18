@@ -19,6 +19,7 @@ class daqcDASH:
             section='ADC'+str(i)
             label = config.get(section, 'label', fallback=section)
             scale = config.getfloat(section,'scale',fallback=1.0)
+            offset = config.getfloat(section,'offset',fallback=0.0)
             range_min = config.getfloat(section,'range_min',fallback=-12.0)
             range_max = config.getfloat(section,'range_max',fallback=12.0)
             self.a2d[i] = daqcADC(self.root,
@@ -27,7 +28,8 @@ class daqcDASH:
                                   SCALE=scale,
                                   RANGE_MIN=range_min,
                                   RANGE_MAX=range_max,
-                                  LABEL=label)
+                                  LABEL=label,
+                                  OFFSET=offset)
             #self.din[i]=daqcDIN(self.root,self.addr,i)      
         #onlye one force channel
         self.force=list(range(8))
