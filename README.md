@@ -11,5 +11,5 @@ Hardware used:
 * Pi-Plates DAQC2plate https://pi-plates.com/daqc2r1/
 
 Origin
-This sottware are inspired by the demo program ppLogger for DAQ from Pi-Plates.
+This software are inspired by the demo program ppLogger for DAQ from Pi-Plates.
 https://github.com/pi-plates
