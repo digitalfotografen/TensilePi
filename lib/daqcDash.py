@@ -40,6 +40,12 @@ class daqcDASH:
         range_max = config.getfloat('F1','range_max',fallback=12.0)
         self.force[0]=daqcForce(self.root,SCALE=scale,RANGE_MIN=range_min,RANGE_MAX=range_max,LABEL=label)
     
+    def tare(self):
+        self.force[0].tare()
+        for i in range(0,ADCHANNELS):
+            self.a2d[i].tare()
+        return
+
     def a2dsample(self):
         vals=[]
         for i in range(0,ADCHANNELS):
@@ -120,4 +126,4 @@ class daqcDASH:
         self.vals=states
         #for i in range(0,8):    
         self.force[0].setState(self.vals[0])
-        return         
+        return    

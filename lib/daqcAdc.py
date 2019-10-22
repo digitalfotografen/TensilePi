@@ -25,7 +25,7 @@ class daqcADC:
         self.maxval=DoubleVar()
         self.val=DoubleVar()
 
-        off=H-2-ADCHANNELS*SLICE+self.chan*SLICE
+        off=(FCHANNELS + self.chan)*SLICE
         BG='#FFFFFFFFF'
         self.a2df=Frame(self.root,bg=BG,bd=1,relief="ridge")
         self.a2df.place(x=0,y=off,width=W,height=SLICE)

@@ -22,6 +22,7 @@ from lib.globals import *
 from lib.daqcAdc import daqcADC
 from lib.daqcDin import daqcDIN
 from lib.daqcDash import daqcDASH
+from lib.daqcButton import daqcButton
 
 # define options for opening or saving a log file
 newlogfile_opt = options = {}
@@ -51,35 +52,30 @@ def NewLogFile():
     if (Logging==False):
         fName=''
         fName=filedialog.asksaveasfilename(**newlogfile_opt)
-        if ('.csv' in fName):
-            lfOpen=True
     
 def StartLog():
-    global logFile, lfOpen, Logging, fName, SampleC, csvfile
-    if ((lfOpen) and  (Logging==False)):
+    global logFile, Logging, fName, fileName, SampleC, csvfile
+    if (Logging==False):
+        Logging=True
+        recordButton.lightOn()
         logHeader = ["DateTime"]
         logHeader += daqc.a2dGetLabels()
         logHeader += daqc.forceGetLabels()
-        if (lfOpen):
-            logFile=open(fName,'w')
-            csvfile = csv.writer(logFile, dialect='excel-tab')
-            csvfile.writerow(tuple(logHeader))
-        Logging=True   
-        SampleC=int(SampleCount.get())
-    else:
-        showerror(
-            "Logging",
-            "You must open a log file before you can start logging"
-        )
+        now = datetime.now()
+        fileName = fName + now.strftime('%Y%m%d_%H%M%S') + '.csv'
+        logFile=open(fileName,'w')
+        csvfile = csv.writer(logFile, dialect='excel-tab')
+        csvfile.writerow(tuple(logHeader))
+        SampleC=0
     
 def StopLog():
-    global logFile, lfOpen, Logging, csvfile
+    global logFile, Logging, csvfile
     if (Logging):
         Logging=False
+        recordButton.lightOff()
         root.wm_title("TensilePi")
-        if (lfOpen):
-            logFile.close()
-            lfOpen=False
+        logFile.close()
+        time.sleep(1)
 
 def About():
     Pmw.aboutversion('0.1')
@@ -96,8 +92,6 @@ def About():
 def shutDown():
     global lfOpen, Logging
     StopLog()
-    if (lfOpen):
-        logFile.close()
     root.destroy()
 
 #Configure: Dialog box to get sampling parameters that holds focus until closed.    
@@ -156,9 +150,9 @@ def signalSetup():
 
 #sample all active channels
 def sample():
-    global logFile, lfOpen, Logging, fName, SampleC, SampleT, csvfile
+    global logFile, Logging, fName, SampleC, SampleT, csvfile
     global theta, dnum
-    root.after(int(SampleT*1000),sample)   
+    root.after(int(SampleT*1000),sample)
     date = datetime.now().strftime("%y-%m-%d %H:%M:%S.%f")[:-3]
     a2dvals=list(range(ADCHANNELS))
     #dinvals=list(range(8))
@@ -167,7 +161,7 @@ def sample():
     #dinvals=daqc.dinsample()
     forcevals=daqc.forcesample() 
             
-    if (Logging and lfOpen):
+    if (Logging):
         csvfile.writerow(tuple([date] + a2dvals + forcevals))
         SampleC +=1
            
@@ -175,11 +169,21 @@ def sample():
 def update():
     global fName
     root.after(int(UpdateT*1000),update)   
-    daqc.a2dupdate() 
-    daqc.forceupdate() 
+    daqc.a2dupdate()
+    daqc.forceupdate()
 
     if (Logging):
-        root.wm_title("TensilePi - " + fName + " - " +str(SampleC)+" Samples and "+str(int(SampleT*SampleC))+" Seconds")
+        DAQC.setDOUTbit(0,0) #record button on
+        root.wm_title("TensilePi - " + fileName + " - " +str(SampleC)+" Samples and "+str(int(SampleT*SampleC))+" Seconds")
+        if (recordButton.wasPressed() and (SampleC > 20)): # check record button
+            StopLog()
+    else:
+        if (recordButton.wasPressed()): #check record button
+            StartLog()
+        if (tareButton.wasPressed()): # check tare button
+            tareButton.lightOn()
+            daqc.tare()
+            tareButton.lightOff()
 
 # Main program
 UpdateT = config.getfloat('Main','update_t', fallback=0.3)
@@ -188,9 +192,9 @@ theta=[0,0,0,0,0,0,0,0]
 dnum=[0,0,0,0,0,0,0,0]
 SampleC=0
 logFile=0
-lfOpen=False
 Logging=False
-fName=''
+fName= '/home/pi/Documents/tplog'
+fileName = ''
 csvfile=0
             
 root = Tk()
@@ -202,9 +206,11 @@ root.wm_title("TensilePi")
     
 w = root.winfo_screenwidth()
 h = root.winfo_screenheight()
-x = w/2 - W/2
-y = h/2 - H/2
-root.geometry("%dx%d+%d+%d" % (W,H,x, y))
+x = 0#w/2 - W/2
+y = 0#h/2 - H/2
+W=min(w,W)
+H=min(h-20,H)
+root.geometry("%dx%d+%d+%d" % (W,H,x,y))
 
 root.config(menu=menu)
 filemenu = Menu(menu,tearoff=0)
@@ -243,6 +249,9 @@ DAQC.setDAC(0,1,0)
 DAQC.setDAC(0,2,0)
 DAQC.setDAC(0,3,0)        
 daqc=daqcDASH(canvas,0)
+recordButton = daqcButton(0)
+tareButton = daqcButton(1)
+
 
 SamplePeriod=StringVar()
 SamplePeriod.set(str(SampleT))
