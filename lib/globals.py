@@ -15,8 +15,7 @@ except ImportError:
     sys.exit()
 
 W = config.getint('GUI', 'W', fallback=1000)
-H = config.getint('GUI', '´H', fallback=800)
-SLICE = config.getint('GUI', 'SLICE', fallback=190)
+H = config.getint('GUI', 'H', fallback=800)
 
 ADCHANNELS = config.getint('ADC', 'channels', fallback=3)
 FCHANNELS = config.getint('Force', 'channels', fallback=1)
