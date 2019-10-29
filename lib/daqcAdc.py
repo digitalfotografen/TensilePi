@@ -8,7 +8,7 @@ class daqcADC:
     min = 0
     max = 0
     
-    def __init__(self,root,addr,channel,SCALE=1,RANGE_MIN=-15,RANGE_MAX=15,OFFSET=0.0,LABEL='A'):
+    def __init__(self,root,addr,channel,SCALE=1,RANGE_MIN=-15,RANGE_MAX=15,OFFSET=0.0,WIDTH=800, HEIGHT=150, Y=0, LABEL='A'):
         self.addr=addr
         self.root=root
         self.chan=channel
@@ -18,36 +18,37 @@ class daqcADC:
         self.range_max = RANGE_MAX
         self.last = 0.0
 
-        self.CWidth=int(.83*W+20)
+        self.CWidth=int(.85*WIDTH)
+        self.CHeight=HEIGHT
         self.buffer = deque([], self.CWidth)
 
         self.minval=DoubleVar()
         self.maxval=DoubleVar()
         self.val=DoubleVar()
 
-        off=(FCHANNELS + self.chan)*SLICE
+        off=Y
         BG='#FFFFFFFFF'
         self.a2df=Frame(self.root,bg=BG,bd=1,relief="ridge")
-        self.a2df.place(x=0,y=off,width=W,height=SLICE)
+        self.a2df.place(x=0,y=off,width=WIDTH,height=HEIGHT)
 
         self.button1=Button(self.a2df, text='0', command=self.tare)
-        self.button1.grid(row=4, column=0, padx=2,pady=2)
+        self.button1.grid(row=2, column=0, rowspan=2, padx=0,pady=0)
 
         self.a2dl = StringVar(root, value=LABEL)
         self.a2dtxt=Label(self.a2df,textvariable=self.a2dl,fg="Black",bg=BG,bd=0,width=12,font="-weight bold")
-        self.a2dtxt.grid(row=0,column=0,columnspan=2,sticky="w")
+        self.a2dtxt.grid(row=0,column=0,columnspan=3,sticky="w")
         self.a2dt = Label(self.a2df,textvariable=self.val,fg="Black",bg=BG,width=12,font="-weight bold")
-        self.a2dt.grid(row=1,column=0,columnspan=2,sticky="w")
+        self.a2dt.grid(row=1,column=0,columnspan=3,sticky="w")
 
-        self.a2minLabel=Label(self.a2df,text="Min",fg="Black",bg=BG,bd=0,width=5).grid(row=2,column=0,sticky="w")
+        self.a2minLabel=Label(self.a2df,text="Min",fg="Black",bg=BG,bd=0,width=5).grid(row=2,column=1,sticky="w")
         self.a2min = Label(self.a2df,textvariable=self.minval,fg="Black",bg=BG,width=5)
-        self.a2min.grid(row=2,column=1)
-        self.a2maxLabel=Label(self.a2df,text="Max",fg="Black",bg=BG,bd=0,width=5).grid(row=3,column=0,sticky="w")
+        self.a2min.grid(row=3,column=2)
+        self.a2maxLabel=Label(self.a2df,text="Max",fg="Black",bg=BG,bd=0,width=5).grid(row=3,column=1,sticky="w")
         self.a2max = Label(self.a2df,textvariable=self.maxval,fg="Black",bg=BG,width=5)
-        self.a2max.grid(row=3,column=1)
+        self.a2max.grid(row=2,column=2)
 
-        self.a2dcanvas=Canvas(self.a2df,bg=BG,width=self.CWidth,height=SLICE,bd=0,relief="flat")
-        self.a2dcanvas.grid(row=0,rowspan=5,column=2,sticky="e")
+        self.a2dcanvas=Canvas(self.a2df,bg=BG,width=self.CWidth,height=HEIGHT,bd=0,relief="flat")
+        self.a2dcanvas.grid(row=0,rowspan=4,column=3,sticky="e")
 
     def tare(self):
         sum = 0.0
@@ -100,5 +101,5 @@ class daqcADC:
             self.a2dcanvas.create_line(points, fill="#FF0000",width=2)
 
     def yCoord(self, value):
-        return int((self.range_max - value) / (self.range_max - self.range_min) * (SLICE-2))
+        return int((self.range_max - value) / (self.range_max - self.range_min) * (self.CHeight-2))
     

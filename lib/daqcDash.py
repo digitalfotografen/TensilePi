@@ -5,13 +5,14 @@ from lib.daqcAdc import daqcADC
 from lib.daqcForce import daqcForce
 
 class daqcDASH:
-    def __init__(self,frame,addr):
+    def __init__(self,frame,addr, WINDOW_WIDTH=800, WINDOW_HEIGHT=600):
         self.a2d=list(range(ADCHANNELS))
         #self.din=list(range(8))  
         self.force=list(range(8))
         
         self.addr=addr
         self.root=frame
+        self.slice=(WINDOW_HEIGHT)/(ADCHANNELS + FCHANNELS)
         self.a2d=list(range(ADCHANNELS))
         #self.din=list(range(8))  
         self.force=list(range(8))
@@ -29,6 +30,9 @@ class daqcDASH:
                                   RANGE_MIN=range_min,
                                   RANGE_MAX=range_max,
                                   LABEL=label,
+                                  HEIGHT=self.slice,
+                                  WIDTH=WINDOW_WIDTH,
+                                  Y=self.slice*(i+1),
                                   OFFSET=offset)
             #self.din[i]=daqcDIN(self.root,self.addr,i)      
         #onlye one force channel
@@ -38,7 +42,14 @@ class daqcDASH:
         scale = config.getfloat('F1','scale',fallback=1.0)
         range_min = config.getfloat('F1','range_min',fallback=-12.0)
         range_max = config.getfloat('F1','range_max',fallback=12.0)
-        self.force[0]=daqcForce(self.root,SCALE=scale,RANGE_MIN=range_min,RANGE_MAX=range_max,LABEL=label)
+        self.force[0]=daqcForce(self.root,
+                                SCALE=scale,
+                                RANGE_MIN=range_min,
+                                RANGE_MAX=range_max,
+                                HEIGHT=self.slice,
+                                WIDTH=WINDOW_WIDTH,
+                                Y=0,
+                                LABEL=label)
     
     def tare(self):
         self.force[0].tare()

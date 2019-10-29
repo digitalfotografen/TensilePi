@@ -77,6 +77,11 @@ def StopLog():
         logFile.close()
         time.sleep(1)
 
+def TareAll():
+    tareButton.lightOn()
+    daqc.tare()
+    tareButton.lightOff()
+
 def About():
     Pmw.aboutversion('0.1')
     Pmw.aboutcopyright('DigitalFotografen AB, 2019\nAll rights reserved')
@@ -181,9 +186,7 @@ def update():
         if (recordButton.wasPressed()): #check record button
             StartLog()
         if (tareButton.wasPressed()): # check tare button
-            tareButton.lightOn()
-            daqc.tare()
-            tareButton.lightOff()
+            TareAll()
 
 # Main program
 UpdateT = config.getfloat('Main','update_t', fallback=0.3)
@@ -206,11 +209,11 @@ root.wm_title("TensilePi")
     
 w = root.winfo_screenwidth()
 h = root.winfo_screenheight()
-x = 0#w/2 - W/2
-y = 0#h/2 - H/2
-W=min(w,W)
-H=min(h-20,H)
-root.geometry("%dx%d+%d+%d" % (W,H,x,y))
+print("%dx%d" % (w, h))
+windowWidth=min([w,W])
+windowHeight=min([h-10,H])
+print("%dx%d" % (windowWidth, windowHeight))
+root.geometry("%dx%d+%d+%d" % (windowWidth,windowHeight,0,-5))
 
 root.config(menu=menu)
 filemenu = Menu(menu,tearoff=0)
@@ -219,9 +222,9 @@ filemenu.add_command(label="Open New File for Logging", command=NewLogFile)
 filemenu.add_separator()
 filemenu.add_command(label="Exit", command=shutDown)
 
-menu.add_command(label="START", foreground='green',font="-weight bold", command=StartLog)
-
-menu.add_command(label="STOP", foreground='red',font="-weight bold",command=StopLog)
+menu.add_command(label="START", foreground='green', command=StartLog)
+menu.add_command(label="STOP", foreground='red' ,command=StopLog)
+menu.add_command(label="Tare all",command=TareAll)
 
 #Todo ViewLog class
 #menu.add_command(label="VIEW", foreground='blue',font="-weight bold",command=ViewLog)
@@ -230,7 +233,7 @@ def callback():
     print ("click!")
 
 
-canvas = Canvas(root, width=W, height=H)
+canvas = Canvas(root, width=windowWidth-5, height=windowHeight-20)
 canvas.pack()
 
 #DAQCpresent=list(range(8))
@@ -248,7 +251,7 @@ DAQC.setDAC(0,0,0)
 DAQC.setDAC(0,1,0)
 DAQC.setDAC(0,2,0)
 DAQC.setDAC(0,3,0)        
-daqc=daqcDASH(canvas,0)
+daqc=daqcDASH(canvas,0,WINDOW_WIDTH=windowWidth-5,WINDOW_HEIGHT=windowHeight-50)
 recordButton = daqcButton(0)
 tareButton = daqcButton(1)
 
