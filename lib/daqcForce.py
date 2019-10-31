@@ -12,7 +12,7 @@ class daqcForce:
     last_reading = 0.1
     min = 0.1
     max = 0.1
-    threshold = 1.0 # how fast chenges are allowed without beeing detected as an error
+    threshold = 0.5 # how fast chenges are allowed without beeing detected as an error
     
     def __init__(self, root, SCALE=1, DATA_PIN=20, SCLK_PIN=21,
                  RANGE_MIN = -1000, RANGE_MAX = 5000,
@@ -81,8 +81,10 @@ class daqcForce:
         
     def sample(self):
         count, mode, reading = self.sensor.get_reading()
-        #average last 2 readings to round of errors
-        self.last = round((self.offset - (self.last_reading+reading)/2) / self.scale, 5)
+        if (abs((reading - self.last_reading)/(self.last_reading+0.0001)) > self.threshold):
+            count, mode, reading = self.sensor.get_reading()
+            print("HX711 reading error")
+        self.last = round((self.offset - reading) / self.scale, 5)
         self.last_reading = reading
         self.buffer.append(self.last)
         if self.last < self.min:
