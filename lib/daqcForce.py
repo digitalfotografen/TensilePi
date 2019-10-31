@@ -8,10 +8,11 @@ from collections import deque
 
 class daqcForce:
     offset = 0
-    last = 0
-    last_reading = 0
-    min = 0
-    max = 0
+    last = 0.1
+    last_reading = 0.1
+    min = 0.1
+    max = 0.1
+    threshold = 0.5 # how fast chenges are allowed without beeing detected as an error
     
     def __init__(self, root, SCALE=1, DATA_PIN=20, SCLK_PIN=21,
                  RANGE_MIN = -1000, RANGE_MAX = 5000,
@@ -80,11 +81,11 @@ class daqcForce:
         
     def sample(self):
         count, mode, reading = self.sensor.get_reading()
-        if (abs(reading - self.last_reading) > 100000):
+        if (abs((reading - self.last_reading)/(self.last_reading+0.0001)) > self.threshold):
             count, mode, reading = self.sensor.get_reading()
             print("HX711 reading error")
+        self.last = round((self.offset - reading) / self.scale, 5)
         self.last_reading = reading
-        self.last = round((self.offset - self.last_reading) / self.scale, 5)
         self.buffer.append(self.last)
         if self.last < self.min:
             self.min = self.last
