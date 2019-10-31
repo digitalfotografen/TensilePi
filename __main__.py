@@ -17,6 +17,7 @@ import random
 import math
 import imp
 import statistics
+from pathlib import Path
 
 from lib.globals import *
 from lib.daqcAdc import daqcADC
@@ -24,12 +25,24 @@ from lib.daqcDin import daqcDIN
 from lib.daqcDash import daqcDASH
 from lib.daqcButton import daqcButton
 
+# set log data path
+# Check if USB-memory is mounted
+def datapath():
+    user = 'pi'
+    media_path = Path('/media/pi')
+    path_content = list(media_path.glob('*'))
+    while path_content:
+        sub_path = path_content.pop()
+        if sub_path.is_dir() and sub_path.owner() == user:
+            return str(sub_path)
+    return '/home/pi/Documents'
+
 # define options for opening or saving a log file
 newlogfile_opt = options = {}
-options['defaultextension'] = '.csv'
-options['filetypes'] = [('csv files', '.csv')]
+#options['defaultextension'] = '.csv'
+#options['filetypes'] = [('csv files', '.csv')]
 options['title'] = 'Open new log file'
-options['initialdir'] = "~/Documents"
+options['initialdir'] = datapath()
 
 # define options for opening or saving an existing log file
 xlogfile_opt = options = {}
@@ -196,10 +209,11 @@ dnum=[0,0,0,0,0,0,0,0]
 SampleC=0
 logFile=0
 Logging=False
-fName= '/home/pi/Documents/tplog'
+fName = datapath() + '/tplog'
+print(fName)
 fileName = ''
 csvfile=0
-            
+
 root = Tk()
 root.resizable(0,0)
 #root=Pmw.initialise()
