@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 import csv
+from openpyxl import Workbook
 from datetime import datetime
 
 from tkinter import *
@@ -67,7 +68,7 @@ def NewLogFile():
         fName=filedialog.asksaveasfilename(**newlogfile_opt)
     
 def StartLog():
-    global logFile, Logging, fName, fileName, SampleC, csvfile
+    global logFile, Logging, fName, fileName, SampleC, csvfile, excel_file, excel_sheet
     if (Logging==False):
         Logging=True
         recordButton.lightOn()
@@ -75,20 +76,24 @@ def StartLog():
         logHeader += daqc.a2dGetLabels()
         logHeader += daqc.forceGetLabels()
         now = datetime.now()
-        fileName = fName + now.strftime('%Y%m%d_%H%M%S') + '.csv'
-        logFile=open(fileName,'w')
+        fileName = fName + now.strftime('%Y%m%d_%H%M%S')
+        logFile=open(fileName+'.csv','w')
         csvfile = csv.writer(logFile, dialect='excel-tab')
         csvfile.writerow(tuple(logHeader))
+        excel_file = Workbook()
+        excel_sheet = excel_file.active
+        excel_sheet.append(tuple(logHeader))
         SampleC=0
     
 def StopLog():
-    global logFile, Logging, csvfile
+    global logFile, Logging, csvfile, excel_file
     if (Logging):
         Logging=False
         recordButton.lightOff()
         root.wm_title("TensilePi")
         logFile.close()
         time.sleep(1)
+        excel_file.save(fileName+'.xlsx')
 
 def TareAll():
     tareButton.lightOn()
@@ -171,7 +176,7 @@ def sample():
     global logFile, Logging, fName, SampleC, SampleT, csvfile
     global theta, dnum
     root.after(int(SampleT*1000),sample)
-    date = datetime.now().strftime("%y-%m-%d %H:%M:%S.%f")[:-3]
+    date = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     a2dvals=list(range(ADCHANNELS))
     #dinvals=list(range(8))
     forcevals=list(range(1))
@@ -181,6 +186,7 @@ def sample():
             
     if (Logging):
         csvfile.writerow(tuple([date] + a2dvals + forcevals))
+        excel_sheet.append(tuple([date] + a2dvals + forcevals))
         SampleC +=1
            
 #update UI with values and plots
@@ -213,6 +219,8 @@ fName = datapath() + '/tplog'
 print(fName)
 fileName = ''
 csvfile=0
+excel_file=0
+excel_sheet=0
 
 root = Tk()
 root.resizable(0,0)
