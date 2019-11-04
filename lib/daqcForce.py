@@ -73,7 +73,6 @@ class daqcForce:
         for i in range(n):
             time.sleep(0.1)
             count, mode, self.last_reading = self.sensor.get_reading()
-            print (self.last_reading)
             sum = sum + float(self.last_reading)
         self.offset = sum / n;
         self.min = 0.0
