@@ -13,6 +13,7 @@ class daqcForce:
     min = 0.1
     max = 0.1
     threshold = 0.5 # how fast chenges are allowed without beeing detected as an error
+    err_count = 0 # counts reading errors
     
     def __init__(self, root, SCALE=1, DATA_PIN=20, SCLK_PIN=21,
                  RANGE_MIN = -1000, RANGE_MAX = 5000,
@@ -68,10 +69,11 @@ class daqcForce:
         print("Tare in process")
         count, mode, self.last_reading = self.sensor.get_reading()
         if (self.last_reading == 0):
-            time.sleep(1.0)
+            time.sleep(2.0)
         for i in range(n):
             time.sleep(0.1)
             count, mode, self.last_reading = self.sensor.get_reading()
+            print (self.last_reading)
             sum = sum + float(self.last_reading)
         self.offset = sum / n;
         print("Offset: ",self.offset)
@@ -82,8 +84,12 @@ class daqcForce:
     def sample(self):
         count, mode, reading = self.sensor.get_reading()
         if (abs((reading - self.last_reading)/(self.last_reading+0.0001)) > self.threshold):
-            count, mode, reading = self.sensor.get_reading()
+            self.err_count += 1
             print("HX711 reading error")
+            if (self.err_count == 1):
+                reading = self.last_reading
+        else:
+            self.err_count = 0
         self.last = round((self.offset - reading) / self.scale, 5)
         self.last_reading = reading
         self.buffer.append(self.last)
