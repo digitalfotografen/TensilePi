@@ -76,7 +76,6 @@ class daqcForce:
             print (self.last_reading)
             sum = sum + float(self.last_reading)
         self.offset = sum / n;
-        print("Offset: ",self.offset)
         self.min = 0.0
         self.max = 0.0
         return self.offset
