@@ -52,10 +52,10 @@ class daqcForce:
         self.a2dt = Label(self.a2df,textvariable=self.val,fg="Black",bg=BG,width=12,font="-weight bold")
         self.a2dt.grid(row=1,column=0,columnspan=3,sticky="w")
 
-        self.a2minLabel=Label(self.a2df,text="Min",fg="Black",bg=BG,bd=0,width=4).grid(row=2,column=1,sticky="w")
+        self.a2minLabel=Label(self.a2df,text="Min",fg="Black",bg=BG,bd=0,width=4).grid(row=3,column=1,sticky="w")
         self.a2min = Label(self.a2df,textvariable=self.minval,fg="Black",bg=BG,width=6)
         self.a2min.grid(row=3,column=2)
-        self.a2maxLabel=Label(self.a2df,text="Max",fg="Black",bg=BG,bd=0,width=4).grid(row=3,column=1,sticky="w")
+        self.a2maxLabel=Label(self.a2df,text="Max",fg="Black",bg=BG,bd=0,width=4).grid(row=2,column=1,sticky="w")
         self.a2max = Label(self.a2df,textvariable=self.maxval,fg="Black",bg=BG,width=6)
         self.a2max.grid(row=2,column=2)
 
